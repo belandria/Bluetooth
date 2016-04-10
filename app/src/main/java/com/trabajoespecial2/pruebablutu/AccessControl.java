@@ -12,10 +12,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class AccessControl extends ActionBarActivity {
@@ -23,11 +33,13 @@ public class AccessControl extends ActionBarActivity {
     int i=0;
     Button OCAccess;
     String address = null;
-    TextView nombreMod;
+    TextView modName;
     private ProgressDialog progress;
     BluetoothAdapter myBluetooth = null;
     BluetoothSocket btSocket = null;
     private boolean isBtConnected = false;
+    String userId = null;
+    EditText text1;
     //SPP UUID. Look for it
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -37,8 +49,9 @@ public class AccessControl extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
         Intent newint = getIntent();
-        address = newint.getStringExtra(User.EXTRA_ADDRESS); //receive the address of the bluetooth device
 
+        address = newint.getStringExtra(User.EXTRA_ADDRESS); //receive the address of the bluetooth device
+        //address = "20:15:03:23:18:90";
         //view of the AccessControl
         setContentView(R.layout.activity_access_control);
 
@@ -56,8 +69,8 @@ public class AccessControl extends ActionBarActivity {
                 Access();      //method to turn on
             }
         });
-        nombreMod = (TextView) findViewById(R.id.textView5);
-        nombreMod.setText(address);
+        modName = (TextView) findViewById(R.id.textView5);
+        modName.setText(address);
     }
 
     public void onDestroy()
@@ -92,6 +105,7 @@ public class AccessControl extends ActionBarActivity {
                     Toast.makeText(getApplicationContext(), "Abriendo...",
                             Toast.LENGTH_SHORT).show();
                     OCAccess.setText("Cerrar");
+                    RPost();
                 } else {
                     i=0;
                     btSocket.getOutputStream().write("C".toString().getBytes());
@@ -107,6 +121,40 @@ public class AccessControl extends ActionBarActivity {
             }
         }
     }
+
+    public void RPost() {
+        text1 = (EditText)findViewById(R.id.editText);
+        userId = text1.getText().toString();
+        RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
+
+        /*
+         * Reemplazar con la dirección del servidor
+         */
+
+        String url = "http://www.belandria.com.ve/newRequest.php";
+
+        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                //This code is executed if the server responds, whether or not the response contains data.
+                //The String 'response' contains the server's response.
+            }
+        }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                //This code is executed if there is an error.
+            }
+        }) {
+
+            protected Map<String, String> getParams() {
+                Map<String, String> MyData = new HashMap<String, String>();
+                MyData.put("appUser_id", userId); //Add the data you'd like to send to the server.
+                return MyData;
+            }
+        };
+        MyRequestQueue.add(MyStringRequest);
+    }
+
 
     // fast way to call Toast
     private void msg(String s)
@@ -173,7 +221,7 @@ public class AccessControl extends ActionBarActivity {
 
             if (!ConnectSuccess)
             {
-                msg("Connection Failed. Is it a SPP Bluetooth? Try again.");
+                msg("Conexión fallida, intente de nuevo.");
                 finish();
             }
             else

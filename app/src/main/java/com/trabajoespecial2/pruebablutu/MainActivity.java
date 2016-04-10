@@ -10,7 +10,6 @@ public class MainActivity extends AppCompatActivity {
     public Button userP;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,7 +22,9 @@ public class MainActivity extends AppCompatActivity {
                 // TODO Auto-generated method stub
                 Intent intent = new Intent(MainActivity.this, User.class);
                 startActivity(intent);
+
             }
         });
+
     }
 }
