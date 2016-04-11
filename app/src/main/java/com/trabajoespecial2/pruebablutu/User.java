@@ -41,29 +41,6 @@ import java.util.Set;
             //if the device has bluetooth
             myBluetooth = BluetoothAdapter.getDefaultAdapter();
 
-            if(myBluetooth == null)
-            {
-                //Show a mensag. that the device has no bluetooth adapter
-                Toast.makeText(getApplicationContext(), "Bluetooth Device Not Available", Toast.LENGTH_LONG).show();
-
-                //finish apk
-                finish();
-            }
-            else if(!myBluetooth.isEnabled())
-            {
-                //Ask to the user turn the bluetooth on
-                // Intent turnBTon = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                // startActivityForResult(turnBTon,1);
-                myBluetooth.enable();
-                Toast.makeText(getApplicationContext(), "Te prendo el Blutu...",
-                        Toast.LENGTH_SHORT).show();
-
-            }else {
-                Toast.makeText(getApplicationContext(), "Ya lo tenias prendio",
-                        Toast.LENGTH_SHORT).show();
-
-            }
-
             btnPaired.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -136,13 +113,5 @@ import java.util.Set;
             }
 
             return super.onOptionsItemSelected(item);
-        }
-        public void onDestroy()
-        {
-            super.onDestroy();
-            finish();
-            myBluetooth.disable();
-            Toast.makeText(getApplicationContext(),"Te apago el blutu",
-                    Toast.LENGTH_SHORT).show();
         }
     }

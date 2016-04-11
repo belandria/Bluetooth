@@ -30,52 +30,92 @@ import java.util.UUID;
 
 public class AccessControl extends ActionBarActivity {
 
-    int i=0;
+    int i=0, j=0;
     Button OCAccess;
-    String address = null;
+    String address2 = "20:15:03:23:18:90";
     TextView modName;
-    private ProgressDialog progress;
+    private ProgressDialog progress, progress1;
     BluetoothAdapter myBluetooth = null;
     BluetoothSocket btSocket = null;
     private boolean isBtConnected = false;
     String userId = null;
     EditText text1;
+    String address = null;
+    Button btnReconnect;
     //SPP UUID. Look for it
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        myBluetooth = BluetoothAdapter.getDefaultAdapter();
+        //
+        while (true){
+        turnOnBT();
+            if(myBluetooth.isEnabled()){break;}
+        }
 
-        Intent newint = getIntent();
 
-        address = newint.getStringExtra(User.EXTRA_ADDRESS); //receive the address of the bluetooth device
-        //address = "20:15:03:23:18:90";
-        //view of the AccessControl
-        setContentView(R.layout.activity_access_control);
+            if(j==1) {
+                Intent newint = getIntent();
 
-        //call the widgets
-        OCAccess = (Button)findViewById(R.id.button2);
-
-        new ConnectBT().execute(); //Call the class to connect
-
-        //commands to be sent to bluetooth
-        OCAccess.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Access();      //method to turn on
+                address2 = newint.getStringExtra(User.EXTRA_ADDRESS); //receive the address of the bluetooth device
             }
-        });
-        modName = (TextView) findViewById(R.id.textView5);
-        modName.setText(address);
+        //view of the AccessControl
+            setContentView(R.layout.activity_access_control);
+
+            //call the widgets
+            OCAccess = (Button) findViewById(R.id.button2);
+            btnReconnect = (Button)findViewById(R.id.buttonReconnect);
+
+            //new ConnectBT().execute(); //Call the class to connect
+
+            //commands to be sent to bluetooth
+            OCAccess.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Access();      //method to turn on
+                }
+            });
+            btnReconnect.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(AccessControl.this, User.class);
+                    startActivity(intent);
+                    j = 1;
+
+                }
+            });
+
+            modName = (TextView) findViewById(R.id.textView5);
+            modName.setText(address2);
+            new ConnectBT().execute();
+
+        }
+
+
+    public void turnOnBT(){
+        if(myBluetooth == null)
+        {
+            //Show a mensag. that the device has no bluetooth adapter
+            Toast.makeText(getApplicationContext(), "Bluetooth Device Not Available", Toast.LENGTH_LONG).show();
+
+            //finish apk
+            finish();
+        }
+        else if(!myBluetooth.isEnabled())
+        {
+            //Ask to the user turn the bluetooth on
+            // Intent turnBTon = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            // startActivityForResult(turnBTon,1);
+            myBluetooth.enable();
+
+        }
     }
 
-    public void onDestroy()
+
+    public void onBackPressed()
     {
-        super.onDestroy();
         if (btSocket!=null) //If the btSocket is busy
         {
             try
@@ -85,9 +125,12 @@ public class AccessControl extends ActionBarActivity {
             catch (IOException e)
             { msg("Error");}
         }
-        finish();
-        Toast.makeText(getApplicationContext(),"Desconectando...",
+        Toast.makeText(getApplicationContext(), "Desconectando...",
                 Toast.LENGTH_SHORT).show();
+        finish();
+        myBluetooth.disable();
+        Intent intent = new Intent(AccessControl.this, MainActivity.class);
+        startActivity(intent);
     }
 
 
@@ -122,7 +165,8 @@ public class AccessControl extends ActionBarActivity {
         }
     }
 
-    public void RPost() {
+    public void RPost()
+    {
         text1 = (EditText)findViewById(R.id.editText);
         userId = text1.getText().toString();
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
@@ -163,14 +207,16 @@ public class AccessControl extends ActionBarActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_led_control, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -183,6 +229,7 @@ public class AccessControl extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 
     private class ConnectBT extends AsyncTask<Void, Void, Void>  // UI thread
     {
@@ -202,7 +249,7 @@ public class AccessControl extends ActionBarActivity {
                 if (btSocket == null || !isBtConnected)
                 {
                     myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
-                    BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
+                    BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address2);//connects to the device's address and checks if it's available
                     btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
                     BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
                     btSocket.connect();//start connection
