@@ -1,10 +1,13 @@
 package com.trabajoespecial2.pruebablutu;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +30,8 @@ import java.util.Set;
         private BluetoothAdapter myBluetooth = null;
         private Set<BluetoothDevice> pairedDevices;
         public static String EXTRA_ADDRESS = "device_address";
+        public static final String PREFS_NAME = "MyPrefsFile";
+
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -48,6 +53,44 @@ import java.util.Set;
 
                 }
             });
+        }
+
+        public void deleteIdCache(){
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.remove("appUser_id");
+            editor.commit();
+
+        }
+
+        public void onBackPressed()
+        {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setTitle("Cerrar Sesión");
+            alertDialogBuilder
+                    .setMessage("¿Desea cerrar sesión?")
+                    .setCancelable(false)
+                    .setPositiveButton("Si",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                 //   moveTaskToBack(true);
+                                    deleteIdCache();
+                                    myBluetooth.disable();
+                                    Intent intent = new Intent(User.this, MainActivity.class);
+                                    startActivity(intent);
+                                }
+                            })
+
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                            dialog.cancel();
+                        }
+                    });
+
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+
         }
 
 

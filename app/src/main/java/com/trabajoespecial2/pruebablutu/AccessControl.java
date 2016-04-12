@@ -1,10 +1,13 @@
 package com.trabajoespecial2.pruebablutu;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -33,8 +36,8 @@ public class AccessControl extends ActionBarActivity {
     int i=0, j=0;
     Button OCAccess;
     String address2 = "20:15:03:23:18:90";
-    TextView modName;
-    private ProgressDialog progress, progress1;
+    TextView statusMod;
+    private ProgressDialog progress;
     BluetoothAdapter myBluetooth = null;
     BluetoothSocket btSocket = null;
     private boolean isBtConnected = false;
@@ -42,57 +45,67 @@ public class AccessControl extends ActionBarActivity {
     EditText text1;
     String address = null;
     Button btnReconnect;
+    String empty = null;
+    public static final String PREFS_NAME = "MyPrefsFile";
+
     //SPP UUID. Look for it
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         myBluetooth = BluetoothAdapter.getDefaultAdapter();
         //
-        while (true){
-        turnOnBT();
-            if(myBluetooth.isEnabled()){break;}
-        }
-
-
-            if(j==1) {
-                Intent newint = getIntent();
-
-                address2 = newint.getStringExtra(User.EXTRA_ADDRESS); //receive the address of the bluetooth device
+        while (true) {
+            turnOnBT();
+            if (myBluetooth.isEnabled()) {
+                break;
             }
-        //view of the AccessControl
-            setContentView(R.layout.activity_access_control);
-
-            //call the widgets
-            OCAccess = (Button) findViewById(R.id.button2);
-            btnReconnect = (Button)findViewById(R.id.buttonReconnect);
-
-            //new ConnectBT().execute(); //Call the class to connect
-
-            //commands to be sent to bluetooth
-            OCAccess.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Access();      //method to turn on
-                }
-            });
-            btnReconnect.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(AccessControl.this, User.class);
-                    startActivity(intent);
-                    j = 1;
-
-                }
-            });
-
-            modName = (TextView) findViewById(R.id.textView5);
-            modName.setText(address2);
-            new ConnectBT().execute();
-
         }
 
+
+        if (j == 1) {
+            Intent newint = getIntent();
+            j = 0;
+            address2 = newint.getStringExtra(User.EXTRA_ADDRESS); //receive the address of the bluetooth device
+        }
+
+        //view of the AccessControl
+        setContentView(R.layout.activity_access_control);
+
+        //call the widgets
+        OCAccess = (Button) findViewById(R.id.button2);
+        btnReconnect = (Button) findViewById(R.id.buttonReconnect);
+
+        //new ConnectBT().execute(); //Call the class to connect
+
+        //commands to be sent to bluetooth
+        OCAccess.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Access();      //method to turn on
+            }
+        });
+        btnReconnect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(AccessControl.this, User.class);
+                startActivity(intent);
+                j = 1;
+
+            }
+        });
+
+        statusMod = (TextView) findViewById(R.id.textView5);
+        while (true) {
+            new ConnectBT().execute();
+            if (!isBtConnected) {
+                break;
+            }
+        }
+
+    }
 
     public void turnOnBT(){
         if(myBluetooth == null)
@@ -113,62 +126,117 @@ public class AccessControl extends ActionBarActivity {
         }
     }
 
-
-    public void onBackPressed()
-    {
-        if (btSocket!=null) //If the btSocket is busy
-        {
-            try
-            {
-                btSocket.close(); //close connection
-            }
-            catch (IOException e)
-            { msg("Error");}
-        }
-        Toast.makeText(getApplicationContext(), "Desconectando...",
-                Toast.LENGTH_SHORT).show();
-        finish();
-        myBluetooth.disable();
-        Intent intent = new Intent(AccessControl.this, MainActivity.class);
-        startActivity(intent);
+    public void deleteIdCache(){
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.remove("appUser_id");
+        editor.commit();
     }
 
+    public void onBackPressed() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("Cerrar Sesión");
+        alertDialogBuilder
+                .setMessage("¿Desea cerrar sesión?")
+                .setCancelable(false)
+                .setPositiveButton("Si",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                moveTaskToBack(true);
+                                deleteIdCache();
+                                if (btSocket!=null) //If the btSocket is busy
+                                {
+                                    try
+                                    {
+                                        btSocket.close(); //close connection
+                                    }
+                                    catch (IOException e)
+                                    { msg("Error");}
+                                }
+                                Toast.makeText(getApplicationContext(), "Desconectando...",
+                                        Toast.LENGTH_SHORT).show();
+                                finish();
+                                myBluetooth.disable();
+                                Intent intent = new Intent(AccessControl.this, MainActivity.class);
+                                startActivity(intent);
+                            }
+                        })
 
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
 
-    private void Access()
-    {
+                        dialog.cancel();
+                    }
+                });
 
-        if (btSocket!=null)
-        {
-            try {
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
 
-                if (i == 0) {
-                    i=1;
-                    btSocket.getOutputStream().write("A".toString().getBytes());
-                    Toast.makeText(getApplicationContext(), "Abriendo...",
-                            Toast.LENGTH_SHORT).show();
-                    OCAccess.setText("Cerrar");
-                    RPost();
-                } else {
-                    i=0;
-                    btSocket.getOutputStream().write("C".toString().getBytes());
-                    Toast.makeText(getApplicationContext(), "Cerrando...",
-                            Toast.LENGTH_SHORT).show();
-                    OCAccess.setText("Abrir");
+        /////////////////////////////////////////////////////////////////////////////
+
+    }
+
+    private void Access() {
+        if (isBtConnected) {
+
+                try {
+
+                    if (i == 0) {
+                        i = 1;
+
+                        btSocket.getOutputStream().write("A".toString().getBytes());
+                        Toast.makeText(getApplicationContext(), "Abriendo...",
+                                Toast.LENGTH_SHORT).show();
+                        OCAccess.setText("Cerrar");
+                        rPost();
+                    } else {
+                        i = 0;
+                        btSocket.getOutputStream().write("C".toString().getBytes());
+                        Toast.makeText(getApplicationContext(), "Cerrando...",
+                                Toast.LENGTH_SHORT).show();
+                        OCAccess.setText("Abrir");
+                    }
+                } catch (IOException e) {
+                    msg("Error");
+                    ReconnectAsk();
                 }
-            }
-
-                    catch (IOException e)
-            {
-                msg("Error");
-            }
+            }else{
+            ReconnectAsk();
         }
+        }
+
+    public void ReconnectAsk(){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("El dispositivo se a desconectado");
+        alertDialogBuilder
+                .setMessage("¿Desea reconectar o salir?")
+                .setCancelable(false)
+                .setPositiveButton("Reconectar",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                moveTaskToBack(true);
+                                Intent intent = new Intent(AccessControl.this, User.class);
+                                startActivity(intent);
+                            }
+                        })
+
+                .setNegativeButton("Salir", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        myBluetooth.disable();
+                        Intent intent = new Intent(AccessControl.this, MainActivity.class);
+                        startActivity(intent);
+                    }
+                });
+
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+
     }
 
-    public void RPost()
-    {
-        text1 = (EditText)findViewById(R.id.editText);
-        userId = text1.getText().toString();
+    public void rPost() {
+
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        final String appUser_id = settings.getString("appUser_id", null);
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
 
         /*
@@ -192,7 +260,7 @@ public class AccessControl extends ActionBarActivity {
 
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap<String, String>();
-                MyData.put("appUser_id", userId); //Add the data you'd like to send to the server.
+                MyData.put("appUser_id", appUser_id); //Add the data you'd like to send to the server.
                 return MyData;
             }
         };
@@ -201,22 +269,19 @@ public class AccessControl extends ActionBarActivity {
 
 
     // fast way to call Toast
-    private void msg(String s)
-    {
+    private void msg(String s) {
         Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
+    public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_led_control, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
+    public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -270,11 +335,15 @@ public class AccessControl extends ActionBarActivity {
             {
                 msg("Conexión fallida, intente de nuevo.");
                 finish();
+                statusMod.setText("Desconectado");
+                Intent intent = new Intent(AccessControl.this, User.class);
+                startActivity(intent);
             }
             else
             {
                 msg("Conectado");
                 isBtConnected = true;
+                statusMod.setText("Conectado");
             }
             progress.dismiss();
         }

@@ -21,7 +21,7 @@
         </activity>
         <activity android:name=".User" />
         <activity android:name=".AccessControl" />
-        <activity android:name=".Adm"></activity>
+        <activity android:name=".AdmControl" />
     </application>
 
 </manifest>
