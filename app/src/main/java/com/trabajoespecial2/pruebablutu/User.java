@@ -74,8 +74,8 @@ import java.util.Set;
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
                                  //   moveTaskToBack(true);
-                                    deleteIdCache();
                                     myBluetooth.disable();
+                                    deleteIdCache();
                                     Intent intent = new Intent(User.this, MainActivity.class);
                                     startActivity(intent);
                                 }

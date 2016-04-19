@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     String ci=null;
     String userExists=null;
     String appUser_id=null;
+    String user_enabled;
     public static final String PREFS_NAME = "MyPrefsFile";
 
 
@@ -91,18 +92,23 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject json = new JSONObject(response);
                         userExists = json.getString("userExists");
                         appUser_id = json.getString("appUser_id");
+                        user_enabled = json.getString("user_enabled");
+
                     }catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    if (userExists == "true"){
+                    if (userExists.equals("true") && user_enabled.equals("1")){
                         Toast.makeText(getApplicationContext(), "Bienvenido",
                                 Toast.LENGTH_LONG).show();
                         saveId();
                         Intent intent = new Intent(MainActivity.this, AccessControl.class);
                         startActivity(intent);
-
                     }
-                    if (userExists == "false"){
+                    if (userExists.equals("true") && user_enabled.equals("0")){
+                        Toast.makeText(getApplicationContext(), "Usuario inhabilitado, por favor contacte al Administrador",
+                                Toast.LENGTH_LONG).show();
+                    }
+                    if (userExists.equals("false")){
                         Toast.makeText(getApplicationContext(), "El usuario no existe",
                                 Toast.LENGTH_LONG).show();
                     }
@@ -111,6 +117,8 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     //This code is executed if there is an error.
+                    Toast.makeText(getApplicationContext(), "Consulta fallida, revise su conexión",
+                            Toast.LENGTH_LONG).show();
                 }
             }) {
 
