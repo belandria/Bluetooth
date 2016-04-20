@@ -15,7 +15,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +24,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -41,11 +43,8 @@ public class AccessControl extends ActionBarActivity {
     BluetoothAdapter myBluetooth = null;
     BluetoothSocket btSocket = null;
     private boolean isBtConnected = false;
-    String userId = null;
-    EditText text1;
-    String address = null;
     Button btnReconnect;
-    String empty = null;
+    String user_enabled=null;
     public static final String PREFS_NAME = "MyPrefsFile";
 
     //SPP UUID. Look for it
@@ -84,7 +83,7 @@ public class AccessControl extends ActionBarActivity {
         OCAccess.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Access();      //method to turn on
+                rPost();      //method to turn on
             }
         });
         btnReconnect.setOnClickListener(new View.OnClickListener() {
@@ -188,7 +187,6 @@ public class AccessControl extends ActionBarActivity {
                         Toast.makeText(getApplicationContext(), "Abriendo...",
                                 Toast.LENGTH_SHORT).show();
                         OCAccess.setText("Cerrar");
-                        rPost();
                     } else {
                         i = 0;
                         btSocket.getOutputStream().write("C".toString().getBytes());
@@ -250,6 +248,38 @@ public class AccessControl extends ActionBarActivity {
             public void onResponse(String response) {
                 //This code is executed if the server responds, whether or not the response contains data.
                 //The String 'response' contains the server's response.
+                try {
+                    JSONObject json = new JSONObject(response);
+                    user_enabled = json.getString("user_enabled");
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
+                if (user_enabled.equals("1")) {
+                    Access();
+                }
+                if(user_enabled.equals("0")){
+                    Toast.makeText(getApplicationContext(), "Usuario inhabilitado, contacte al Administrador",
+                            Toast.LENGTH_SHORT).show();
+                    deleteIdCache();
+                    if (btSocket!=null) //If the btSocket is busy
+                    {
+                        try
+                        {
+                            btSocket.close(); //close connection
+                        }
+                        catch (IOException e)
+                        { msg("Error");}
+                    }
+
+                    finish();
+                    myBluetooth.disable();
+                    Intent intent = new Intent(AccessControl.this, MainActivity.class);
+                    startActivity(intent);
+
+
+                }
             }
         }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
             @Override

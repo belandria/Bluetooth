@@ -31,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
     String ci=null;
     String userExists=null;
     String appUser_id=null;
-    String user_enabled;
+    String user_enabled=null;
+
     public static final String PREFS_NAME = "MyPrefsFile";
 
 
